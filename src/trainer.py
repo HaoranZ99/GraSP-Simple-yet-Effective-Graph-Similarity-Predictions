@@ -259,6 +259,7 @@ class Trainer(object):
         self.model.eval()
 
         scores = np.empty((len(self.testing_graphs), len(self.trainval_graphs)))
+        scores_mae = np.empty((len(self.testing_graphs), len(self.trainval_graphs)))
         ground_truth = np.empty((len(self.testing_graphs), len(self.trainval_graphs)))
         ground_truth_origin = np.empty((len(self.testing_graphs), len(self.trainval_graphs)))
         prediction_mat = np.empty((len(self.testing_graphs), len(self.trainval_graphs)))
@@ -286,6 +287,9 @@ class Trainer(object):
             # Loss sim.
             scores[i] = (
                 F.mse_loss(prediction, target, reduction="none").detach().numpy()
+            )
+            scores_mae[i] = (
+                torch.nn.L1Loss(reduction="none")(prediction, target).detach().numpy()
             )
 
             # # Loss sim.
@@ -351,6 +355,7 @@ class Trainer(object):
         self.prec_at_10 = np.mean(prec_at_10_list).item()
         self.prec_at_20 = np.mean(prec_at_20_list).item()
         self.model_error = np.mean(scores).item()
+        self.model_mae = np.mean(scores_mae).item()
         self.print_evaluation()
         return prediction_mat
 
@@ -360,6 +365,7 @@ class Trainer(object):
         """
         # print("\nmse(10^-3): " + str(round(self.model_error * 1000, 5)) + ".")
         print("\nrmse: " + str(round(math.sqrt(self.model_error), 5)) + ".")
+        print("mae: " + str(round(self.model_mae, 5)) + ".")
         print("Spearman's rho: " + str(round(self.rho, 5)) + ".")
         print("Kendall's tau: " + str(round(self.tau, 5)) + ".")
         print("p@10: " + str(round(self.prec_at_10, 5)) + ".")
